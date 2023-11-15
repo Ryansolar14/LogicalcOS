@@ -9,19 +9,28 @@ KEYPAD keypad;
 const int interruptPin = 2;
 volatile boolean buttonAvailable = false;
 
+//Declare Global Variables
+char currentKey = '';
+int num = 0;
+String sequence = "";
+String number1 = "";
+String number2 = "";
+bool add1[8];
+bool add2[8];
+
 
 void setup() {
     Serial.begin(9600);
     Serial.println("Qwiic KeyPad Example 5 - InterruptRead");
 
-    if (keypad1.begin() == false) 	// Note, using begin() like this will use default I2C address, 0x4B.
+    if (keypad.begin() == false) 	// Note, using begin() like this will use default I2C address, 0x4B.
     // You can pass begin() a different address like so: keypad1.begin(Wire, 0x4A).
     {
         Serial.println("Keypad does not appear to be connected. Please check wiring. Freezing...");
         while (1);
     }
     Serial.print("Initialized. Firmware Version: ");
-    Serial.println(keypad1.getVersion());
+    Serial.println(keypad.getVersion());
 
     Serial.println("Press a button and it will print here.");
 
@@ -37,11 +46,39 @@ void setup() {
 void loop() {
     if(buttonAvailable){
         keypad.updateFIFO();
-        Serial.print(char(keypad1.getButton()));
+        currentKey = keypad.getButton();
+        //If # save the number to a variable
+        if(currentKey == '#'){
+            num++; //Value to determine if it is the first or second number
+            if(num == 1){
+                number1 = sequence;
+            } else if(num == 2){
+                number2 = sequence;
+            }
+        } else if(key == '*'){
+            convertDecimalToBinary(number1.toInt(), add1);
+            convertDecimalToBinary(number2.toInt(), add2);
+
+        } else {
+            sequence = sequence + currentKey;
+        }
+        Serial.print(char(keypad.getButton()));
         buttonAvailable = false;
-    }
+    } 
 }
 
 void intReadPrintButton(){
     buttonAvailable = true;
+}
+
+void convertDecimalToBinary(int num, bool arr[8]) {
+    if(num < 256 && num >= 0){
+      for (int i = 0; i < 8; i++) {
+      arr[7 - i] = (num >> i) & 1;
+    }
+  }
+}
+
+void setOutputs(bool add1[8], bool add2[8]){
+    
 }
