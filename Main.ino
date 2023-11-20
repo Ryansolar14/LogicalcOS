@@ -34,10 +34,10 @@ void setup() {
 
     Serial.println("Press a button and it will print here.");
 
-    // pinMode(interruptPin, INPUT); // Qwiic Keypad holds INT pin HIGH @ 3.3V, then LOW when fired.
+    pinMode(interruptPin, INPUT); // Qwiic Keypad holds INT pin HIGH @ 3.3V, then LOW when fired.
     // Note, this means we do not want INPUT_PULLUP.
 
-    // attachInterrupt(digitalPinToInterrupt(interruptPin), intReadPrintButton, FALLING);
+    attachInterrupt(digitalPinToInterrupt(interruptPin), intReadPrintButton, FALLING);
     // Note, INT on the Keypad will "fall" from HIGH to LOW when a new button has been pressed.
     // Also note, it will stay low while there are still button events on the stack.
     // This is useful if you want to "poll" the INT pin, rather than use a hardware interrupt.
@@ -86,6 +86,6 @@ void convertDecimalToBinary(int num, bool arr[8]) {
   }
 }
 
-void setOutputs(bool add1[8], bool add2[8]){
+void setOutputs(bool arr[8]){
     
 }
