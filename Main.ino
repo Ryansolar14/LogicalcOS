@@ -20,15 +20,18 @@ const int latchPin1 = 4;
 const int dataPin1 = 5;
 
 const int clockPin2 = 6;
-const int latchPin2 = 7;
+const int latchPin2 = 9;
 const int dataPin2 = 8;
 
-const int overflowPin = 9;
+const int overflowPin = 10;
 const int statusPin = 7;
 
 String sequence = "";
 String number1 = "";
 String number2 = "";
+
+int num1 = 0;
+int num2 = 0;
 
 void setup() {
   pinMode(statusPin, OUTPUT);
@@ -36,6 +39,12 @@ void setup() {
   pinMode(clockPin1, OUTPUT);
   pinMode(latchPin1, OUTPUT);
   pinMode(dataPin1, OUTPUT);
+  pinMode(clockPin2, OUTPUT);
+  pinMode(latchPin2, OUTPUT);
+  pinMode(dataPin2, OUTPUT);
+
+  setRegister(0, clockPin1, latchPin1, dataPin1);
+  setRegister(0, clockPin2, latchPin2, dataPin2);
 
   digitalWrite(statusPin, 0);
   Serial.begin(9600);
@@ -59,7 +68,6 @@ void setup() {
 }
 
 void loop() {
-  analogWrite(clockPin, 100);
   if (buttonAvailable) {
     keypad.updateFIFO();
     char currentKey = keypad.getButton();
@@ -69,19 +77,25 @@ void loop() {
       num++;  //Value to determine if it is the first or second number
       if (num == 1) {
         number1 = sequence;
+        num1 = number1.toInt();
         Serial.println("Sequence 1 " + number1);
         sequence = "";
       } else if (num == 2) {
         number2 = sequence;
+        num2 = number2.toInt();
         Serial.println("Sequence 2 " + number2);
         sequence = "";
       } else {
         Serial.println("Exeption100!");
       }
     } else if (currentKey == '#') {
-
-      setRegister(num1, clockPin1, latchPin1, dataPin1);
-
+        if((num1 + num2) > 511){
+          digitalWrite(overflowPin, HIGH);
+        } else {
+          digitalWrite(overflowPin, LOW);
+          setRegister(num1, clockPin1, latchPin1, dataPin1);
+          setRegister(num2, clockPin2, latchPin2, dataPin2);
+        }
     } else {
       sequence = sequence + currentKey;
     }
