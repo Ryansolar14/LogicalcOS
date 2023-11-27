@@ -15,56 +15,56 @@ char currentKey = "";
 int num = 0;
 int part = 0;
 
-const int aPin1 = 3;
-const int aPin2 = 4;
-const int bPin1 = 5;
-const int bPin2 = 6;
+const int clockPin1 = 3;
+const int latchPin1 = 4;
+const int dataPin1 = 5;
+
+const int clockPin2 = 6;
+const int latchPin2 = 9;
+const int dataPin2 = 8;
+
+const int overflowPin = 10;
 const int statusPin = 7;
 
 String sequence = "";
 String number1 = "";
 String number2 = "";
 
-bool add1[8];
-bool add2[8];
-
+int num1 = 0;
+int num2 = 0;
 
 void setup() {
   pinMode(statusPin, OUTPUT);
-  pinMode(aPin1, OUTPUT);
-  pinMode(aPin2, OUTPUT);
-  pinMode(bPin1, OUTPUT);
-  pinMode(bPin2, OUTPUT);
+  pinMode(overflowPin, OUTPUT);
+  pinMode(clockPin1, OUTPUT);
+  pinMode(latchPin1, OUTPUT);
+  pinMode(dataPin1, OUTPUT);
+  pinMode(clockPin2, OUTPUT);
+  pinMode(latchPin2, OUTPUT);
+  pinMode(dataPin2, OUTPUT);
 
-  digitalWrite(aPin1, 0);
-  digitalWrite(aPin2, 0);
-  digitalWrite(bPin1, 0);
-  digitalWrite(bPin2, 0);
+  setRegister(0, clockPin1, latchPin1, dataPin1);
+  setRegister(0, clockPin2, latchPin2, dataPin2);
+
   digitalWrite(statusPin, 0);
   Serial.begin(9600);
   Serial.println("Qwiic KeyPad Example 5 - InterruptRead");
 
-  if (keypad.begin() == false)  // Note, using begin() like this will use default I2C address, 0x4B.
-  // You can pass begin() a different address like so: keypad1.begin(Wire, 0x4A).
+  if (keypad.begin() == false)
   {
     Serial.println("Keypad does not appear to be connected. Please check wiring. Freezing...");
-    while (1)
-      ;
+    while (1);
   }
+
   digitalWrite(statusPin, 1);
   Serial.print("Initialized. Firmware Version: ");
   Serial.println(keypad.getVersion());
 
   Serial.println("Press a button and it will print here.");
 
-  pinMode(interruptPin, INPUT);  // Qwiic Keypad holds INT pin HIGH @ 3.3V, then LOW when fired.
-  // Note, this means we do not want INPUT_PULLUP.
+  pinMode(interruptPin, INPUT);  
 
-  
   attachInterrupt(digitalPinToInterrupt(interruptPin), intReadPrintButton, FALLING);
-  // Note, INT on the Keypad will "fall" from HIGH to LOW when a new button has been pressed.
-  // Also note, it will stay low while there are still button events on the stack.
-  // This is useful if you want to "poll" the INT pin, rather than use a hardware interrupt.
 }
 
 void loop() {
@@ -77,22 +77,25 @@ void loop() {
       num++;  //Value to determine if it is the first or second number
       if (num == 1) {
         number1 = sequence;
+        num1 = number1.toInt();
         Serial.println("Sequence 1 " + number1);
         sequence = "";
       } else if (num == 2) {
         number2 = sequence;
+        num2 = number2.toInt();
         Serial.println("Sequence 2 " + number2);
         sequence = "";
       } else {
         Serial.println("Exeption100!");
       }
     } else if (currentKey == '#') {
-      convertDecimalToBinary(number1.toInt(), number2.toInt(), add1, add2);
-      Serial.println("Converted");
-      digitalWrite(aPin1, add1[7]);
-      digitalWrite(aPin2, add1[6]);
-      digitalWrite(bPin1, add2[7]);
-      digitalWrite(bPin2, add2[6]);  
+        if((num1 + num2) > 511){
+          digitalWrite(overflowPin, HIGH);
+        } else {
+          digitalWrite(overflowPin, LOW);
+          setRegister(num1, clockPin1, latchPin1, dataPin1);
+          setRegister(num2, clockPin2, latchPin2, dataPin2);
+        }
     } else {
       sequence = sequence + currentKey;
     }
@@ -107,14 +110,9 @@ void intReadPrintButton() {
   buttonAvailable = true;
 }
 
-void convertDecimalToBinary(int num1, int num2, bool arr1[8], bool arr2[8]) {
-   for (int i = 0; i < 8; i++) {
-    arr1[7 - i] = num1 & (1 << i);
-  }
-  for (int i = 0; i < 8; i++) {
-    arr2[7 - i] = num2 & (1 << i);
-  }
-}
-
-void setOutputs(bool arr[8]) {
+//Sets the shift register.
+void setRegister(int num, int clockPin, int latchPin, int dataPin) {
+  digitalWrite(latchPin, 0);
+  shiftOut(dataPin, clockPin, MSBFIRST, num);
+  digitalWrite(latchPin, 1);
 }
