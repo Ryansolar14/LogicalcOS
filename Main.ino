@@ -7,15 +7,16 @@
 #include "SparkFun_Qwiic_Keypad_Arduino_Library.h"
 
 KEYPAD keypad;
+//Declare Global Variables
 
-const int interruptPin = 2;
 volatile boolean buttonAvailable = false;
 
-//Declare Global Variables
 char currentKey = "";
 
 int num = 0;
 int part = 0;
+
+const int interruptPin = 2;
 
 const int clockPin1 = 3;
 const int latchPin1 = 4;
