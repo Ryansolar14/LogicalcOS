@@ -26,8 +26,9 @@ const int clockPin2 = 6;
 const int latchPin2 = 9;
 const int dataPin2 = 8;
 
-const int overflowPin = 10;
+const int overflowPin = 11;
 const int statusPin = 7;
+const int buzzerPin = 10;
 
 String sequence = "";
 String number1 = "";
@@ -46,6 +47,7 @@ void setup() {
   pinMode(clockPin2, OUTPUT);
   pinMode(latchPin2, OUTPUT);
   pinMode(dataPin2, OUTPUT);
+  pinMode(buzzerPin, OUTPUT);
   pinMode(interruptPin, INPUT);  
 
   //Set all shift register output to LOW so the display is initially zero
@@ -102,8 +104,13 @@ void loop() {
       //If key is #, check for an overflow and output the two numbers on the shift registers.
     } else if (currentKey == '#') {
         //Check for overflow, if there is an overflow, set the overflow pin high.
-        if((num1 + num2) > 126){
+        if (((num1 + num2) == 1001)){
+          analogWrite(buzzerPin, 100);
+        } else if ((num1 > 63) || (num2 > 63)){
           digitalWrite(overflowPin, HIGH);
+          analogWrite(buzzerPin, 100);
+          delay(1500);
+          analogWrite(buzzerPin, 0);
         } else {
           digitalWrite(overflowPin, LOW);
           setRegister(num1, clockPin1, latchPin1, dataPin1);
